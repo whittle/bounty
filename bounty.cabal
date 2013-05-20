@@ -1,0 +1,28 @@
+name:             bounty
+version:          0.0.0.1
+synopsis:         A drop-in replacement for memcached that also supports a subset of the relational algebra
+homepage:         https://github.com/whittle/bounty
+license:          MIT
+license-file:     LICENSE.txt
+author:           Jason Whittle
+maintainer:       jason.whittle@gmail.com
+copyright:        Copyright (c) 2013 Jason A. Whittle
+category:         Network
+build-type:       Simple
+cabal-version:    >= 1.8
+stability:        experimental
+tested-with:      GHC == 7.4.2
+bug-reports:      https://github.com/whittle/bounty/issues
+description:
+  Bounty is a drop-in replacement for memcached that also supports a
+  subset of the relational algebra. Inspired by Neha Narula’s
+  presentation about Pequod at Ricon East 2013. N.B. Bounty is
+  currently highly experimental, and not even kind of complete.
+
+extra-source-files:
+  README.md
+  LICENSE.txt
+
+source-repository head
+  type: git
+  location: https://github.com/whitle/bounty
