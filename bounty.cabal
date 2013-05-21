@@ -23,6 +23,24 @@ extra-source-files:
   README.md
   LICENSE.txt
 
+executable bounty
+  hs-source-dirs: src
+  main-is: Bounty.hs
+
+  other-modules:
+    Network.Memcached.Command
+    Network.Memcached.Parser
+    Network.Memcached.Token
+    Network.Memcached.Lexer
+
+  build-depends:       base ==4.5.*
+
+  build-depends:  base                          == 4.5.*
+                , ghc-prim
+
+  build-tools:  alex
+              , happy
+
 source-repository head
   type: git
   location: https://github.com/whitle/bounty
