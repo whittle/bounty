@@ -39,5 +39,5 @@ tokens :-
   sizes       { const TokenSizes }
 
   -- Content tokens
-  $digit+                         { \s -> TokenInteger . Integer $ read s }
+  $digit+                         { \s -> TokenInteger $ read s }
   $alpha [$alpha $digit \_ \']*   { \s -> TokenKey s }

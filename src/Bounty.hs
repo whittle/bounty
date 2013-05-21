@@ -1,4 +1,7 @@
-import Network.Memcached.Parser
+import Network.Memcached.Lexer (alexScanTokens)
+import Network.Memcached.Parser (parseCommand)
 
 main :: IO ()
-main = return ()
+main = do
+  getLine >>= print . parseCommand . alexScanTokens
+  main
