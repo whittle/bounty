@@ -3,9 +3,6 @@ module Network.Memcached.Parser (parseCommand) where
 
 import Network.Memcached.Command
 import Network.Memcached.Token
-
-parseError :: [Token] -> a
-parseError _ = error "Parse error"
 }
 
 %name parseCommand
@@ -100,3 +97,8 @@ keys :: { [String] }
 
 verbosity_level :: { Integer }
                 : integer    { $1 }
+
+{
+parseError :: [Token] -> a
+parseError _ = error "Parse error"
+}

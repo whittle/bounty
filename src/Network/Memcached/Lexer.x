@@ -4,7 +4,7 @@ module Network.Memcached.Lexer (alexScanTokens) where
 import Network.Memcached.Token
 }
 
-% wrapper "basic"
+%wrapper "basic"
 
 $digit = 0-9
 $alpha = [a-zA-Z]
