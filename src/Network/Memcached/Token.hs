@@ -1,6 +1,11 @@
-module Network.Memcached.Token where
+module Network.Memcached.Token
+       ( Token(..)
+       ) where
 
-data Token = TokenSet
+data Token = TokenKey String
+           | TokenInteger Integer
+             -- Commands
+           | TokenSet
            | TokenAdd
            | TokenReplace
            | TokenAppend
@@ -16,9 +21,7 @@ data Token = TokenSet
            | TokenVersion
            | TokenVerbosity
            | TokenQuit
-
-           | TokenKey String
-           | TokenInteger Integer
+             -- Non-command literals
            | TokenNoReply
            | TokenItems
            | TokenSlabs

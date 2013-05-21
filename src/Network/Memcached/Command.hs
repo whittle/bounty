@@ -1,4 +1,7 @@
-module Network.Memcached.Command where
+module Network.Memcached.Command
+       ( Command(..)
+       , StatisticsOption(..)
+       ) where
 
 data Command = SetCommand String Integer Integer Integer Bool
              | AddCommand String Integer Integer Integer Bool
