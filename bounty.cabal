@@ -37,11 +37,13 @@ executable bounty
 
   build-depends:  base                          == 4.5.*
                 , ghc-prim
-                , array                         >= 0.4.0.0
+                , array                         >= 0.4
+                , containers                    >= 0.4
+                , transformers                  >= 0.2.2
 
   build-tools:  alex
               , happy
 
 source-repository head
   type: git
-  location: https://github.com/whitle/bounty
+  location: https://github.com/whittle/bounty
