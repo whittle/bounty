@@ -7,6 +7,7 @@ module Network.Memcached.Command
        , showMsg
        ) where
 
+import Control.Concurrent.STM
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Map as Map
 import Data.Map ((!))
@@ -31,13 +32,16 @@ data Command = SetCommand Key Flags Exptime Bytes Reply
              | QuitCommand
              deriving (Eq, Show)
 
-apply :: Command -> MemState -> (String, MemState)
-apply (SetCommand k _ _ b _) s = ("Set " ++ BS.unpack k ++ " to " ++ show b, Map.insert k b s)
-apply (GetCommand ks) s = (showReverse s ks, s)
-apply _ s = ("No action taken: " ++ show s, s)
-
-showReverse :: MemState -> [Key] -> String
-showReverse m = unwords . reverse . map (\k -> show (m ! k))
+apply :: Command -> TVar MemState -> IO BS.ByteString
+apply (SetCommand k _ _ b _) tm = do
+  atomically $ do
+    m <- readTVar tm
+    writeTVar tm $ Map.insert k b m
+  return $ BS.pack $ "Set " ++ BS.unpack k ++ " to " ++ show b ++ "\r\n"
+apply (GetCommand ks) tm = do
+  m <- readTVarIO tm
+  return $ BS.pack $ (unwords $ map (\k -> show (m ! k)) ks) ++ "\r\n"
+apply s _ = return $ BS.pack $ "No action taken: " ++ show s ++ "\r\n"
 
 isQuit :: Command -> Bool
 isQuit QuitCommand = True
