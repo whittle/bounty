@@ -30,13 +30,15 @@ executable bounty
 
   build-depends:  base                          >= 4.5
                 , bounty
-                , attoparsec                    >= 0.10
+                , conduit                       >= 1
+                , network-conduit               >= 1
 
 library
   hs-source-dirs: lib
   ghc-options:    -Wall
 
   exposed-modules:
+    Bounty.Application
     Network.Memcached.Command
     Network.Memcached.Parser
     Network.Memcached.Types
@@ -45,6 +47,7 @@ library
                 , ghc-prim
                 , array                         >= 0.4
                 , attoparsec                    >= 0.10
+                , attoparsec-conduit            >= 1
                 , bytestring                    >= 0.9
                 , conduit                       >= 1
                 , containers                    >= 0.4

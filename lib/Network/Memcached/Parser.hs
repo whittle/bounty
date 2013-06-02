@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Memcached.Parser
        ( commands
+       , command
        ) where
 
 import Prelude hiding (takeWhile)
