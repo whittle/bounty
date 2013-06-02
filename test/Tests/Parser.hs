@@ -16,10 +16,24 @@ import Network.Memcached.Types
 
 tests = $(testGroupGenerator)
 
-case_set = assertCommandParse "set asdf 1 2 3\r\n"
-           $ SetCommand "asdf" 1 2 3 True
-case_add = assertCommandParse "add sdfg 4 5 6 noreply\r\n"
-           $ AddCommand "sdfg" 4 5 6 False
+test_set =
+  [ testCase "without noreply" _case_set
+  , testCase "with noreply" _case_set_noreply
+  ]
+_case_set = assertCommandParse "set asdf 1 2 3\r\n"
+            $ SetCommand "asdf" 1 2 3 True
+_case_set_noreply = assertCommandParse "set asdf 1 2 3 noreply\r\n"
+                    $ SetCommand "asdf" 1 2 3 False
+
+test_add =
+  [ testCase "without noreply" _case_add
+  , testCase "with noreply" _case_add_noreply
+  ]
+_case_add = assertCommandParse "add sdfg 4 5 6\r\nzxcvbn\r\n"
+            $ AddCommand "sdfg" 4 5 True "zxcvbn"
+_case_add_noreply = assertCommandParse "add sdfg 4 5 6 noreply\r\nzxcvbn\r\n"
+                    $ AddCommand "sdfg" 4 5 False "zxcvbn"
+
 case_replace = assertCommandParse "replace dfgh 7 8 9\r\n"
                $ ReplaceCommand "dfgh" 7 8 9 True
 case_append = assertCommandParse "append fghj 10 11 12 noreply\r\n"
@@ -75,4 +89,4 @@ case_version = assertCommandParse "version\r\n" VersionCommand
 case_verbosity = assertCommandParse "verbosity 0\r\n" $ VerbosityCommand 0
 case_quit = assertCommandParse "quit\r\n" QuitCommand
 
-assertCommandParse b c = parseOnly commands b @?= Right [c]
+assertCommandParse b c = parseOnly command b @?= Right c

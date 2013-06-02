@@ -14,7 +14,7 @@ import Network.Memcached.Types
 
 -- | All the different commands that regular memcached accepts.
 data Command = SetCommand Key Flags Exptime Bytes Reply
-             | AddCommand Key Flags Exptime Bytes Reply
+             | AddCommand Key Flags Exptime Reply Content
              | ReplaceCommand Key Flags Exptime Bytes Reply
              | AppendCommand Key Flags Exptime Bytes Reply
              | PrependCommand Key Flags Exptime Bytes Reply

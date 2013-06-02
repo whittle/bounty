@@ -12,6 +12,7 @@ type Flags = Integer
 type Exptime = Integer
 type Bytes = Integer
 type Reply = Bool
+type Content = BS.ByteString
 type CasUnique = Integer
 type Time = Integer
 type VerbosityLevel = Integer

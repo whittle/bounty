@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Memcached.Parser
-       ( commands
-       , command
+       ( command
        ) where
 
 import Prelude hiding (takeWhile)
@@ -12,9 +11,6 @@ import Data.Word
 import Network.Memcached.Command
 import Network.Memcached.Types
 
-commands :: Parser [Command]
-commands = many' command
-
 command :: Parser Command
 command = choice [ add, cas, get, set, decr, gets, incr, quit, stats, append
                  , delete, prepend, replace, version, flushAll, verbosity ]
@@ -23,7 +19,19 @@ set :: Parser Command
 set = stringCI "set" >> SetCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
 
 add :: Parser Command
-add = stringCI "add" >> AddCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
+add = startAdd >>= bytesAdd >>= replyAdd >>= completeAdd
+
+startAdd :: Parser (Reply -> Content -> Command)
+startAdd = stringCI "add" >> AddCommand <$> key <*> flags <*> exptime
+
+bytesAdd :: (Reply -> Content -> Command) -> Parser (Reply -> Content -> Command, Int)
+bytesAdd a = (,) <$> return a <*> int
+
+replyAdd :: (Reply -> Content -> Command, Int) -> Parser (Content -> Command, Int)
+replyAdd (a, b) = (,) <$> fmap a reply <*> return b <* newline
+
+completeAdd :: (Content -> Command, Int) -> Parser Command
+completeAdd (a, b) = a <$> Data.Attoparsec.take b <* newline
 
 replace :: Parser Command
 replace = stringCI "replace" >> ReplaceCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
@@ -79,7 +87,7 @@ exptime = skipSpace1 >> decimal
 bytes :: Parser Bytes
 bytes = skipSpace1 >> decimal
 
-reply :: Parser Bool
+reply :: Parser Reply
 reply = skipSpace >> option True (stringCI "noreply" >> return False)
 
 casUnique :: Parser CasUnique
@@ -90,6 +98,9 @@ time = skipSpace1 >> decimal
 
 integer :: Parser Integer
 integer = skipSpace1 >> decimal
+
+int :: Parser Int
+int = skipSpace1 >> decimal
 
 statisticsOption :: Parser StatisticsOption
 statisticsOption = skipSpace1 >> choice
