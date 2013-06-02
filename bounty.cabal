@@ -25,25 +25,48 @@ extra-source-files:
 
 executable bounty
   hs-source-dirs: src
-  main-is: Bounty.hs
+  main-is:        Bounty.hs
+  ghc-options:    -Wall
 
-  other-modules:
+  build-depends:  base                          >= 4.5
+                , bounty
+                , attoparsec                    >= 0.10
+
+library
+  hs-source-dirs: lib
+  ghc-options:    -Wall
+
+  exposed-modules:
     Network.Memcached.Command
     Network.Memcached.Parser
-    Network.Memcached.Token
-    Network.Memcached.Lexer
+    Network.Memcached.Types
 
-  build-depends:       base ==4.5.*
-
-  build-depends:  base                          == 4.5.*
+  build-depends:  base                          >= 4.5
                 , ghc-prim
                 , array                         >= 0.4
+                , attoparsec                    >= 0.10
+                , bytestring                    >= 0.9
+                , conduit                       >= 1
                 , containers                    >= 0.4
                 , transformers                  >= 0.2.2
 
-  build-tools:  alex
-              , happy
+test-suite tests
+  type:           exitcode-stdio-1.0
+  main-is:        Tests.hs
+  hs-source-dirs: test
+
+  other-modules:
+    Tests.Parser
+
+  build-depends:  base                          >= 4.5
+                , Cabal                         >= 1.14
+                , HUnit                         >= 1.2
+                , test-framework                >= 0.8
+                , test-framework-hunit          >= 0.3
+                , test-framework-th             >= 0.2
+                , attoparsec                    >= 0.10
+                , bounty
 
 source-repository head
-  type: git
-  location: https://github.com/whittle/bounty
+  type:           git
+  location:       https://github.com/whittle/bounty

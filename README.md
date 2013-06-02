@@ -17,11 +17,14 @@ Implementation
 * Implemented in
   [Haskell](http://www.haskell.org/haskellwiki/Haskell).
 
-* Front-end lexer created by [Alex](http://www.haskell.org/alex/)
-  (like flex for Haskell).
+* The front-end parser is build in
+  [Attoparsec](http://hackage.haskell.org/package/attoparsec) for
+  speed. As much as possible is done using
+  [bytestrings](http://hackage.haskell.org/package/bytestring), again
+  for speed.
 
-* Front-end parser created by [Happy](http://www.haskell.org/happy/)
-  (like yacc for Haskell).
-
-* Underlying data structure is just an alist while I get the interface
-  working. Obviously, that is not optimal.
+* The underlying data structure is just a
+  [Map](http://hackage.haskell.org/packages/archive/containers/latest/doc/html/Data-Map.html)
+  while I get the interface working. Obviously, this needs to be
+  replaced with something more concurrency-friendly once things get
+  going.
