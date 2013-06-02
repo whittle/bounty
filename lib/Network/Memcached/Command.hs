@@ -1,14 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Memcached.Command
        ( Command(..)
-       , StatisticsOption(..)
        , apply
        , isQuit
        , showMsg
        ) where
 
 import Control.Concurrent.STM
-import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Char8 as B
 import qualified Data.Map as Map
 import Data.Map ((!))
 import Network.Memcached.Types
@@ -32,16 +31,22 @@ data Command = SetCommand Key Flags Exptime Bytes Reply
              | QuitCommand
              deriving (Eq, Show)
 
-apply :: Command -> TVar MemState -> IO BS.ByteString
-apply (SetCommand k _ _ b _) tm = do
+apply :: Command -> TVar MemState -> IO (Maybe B.ByteString)
+apply (SetCommand k _ _ b True) tm = do
   atomically $ do
     m <- readTVar tm
     writeTVar tm $ Map.insert k b m
-  return $ BS.pack $ "Set " ++ BS.unpack k ++ " to " ++ show b ++ "\r\n"
+  return $ Just $ B.pack $ "Set " ++ B.unpack k ++ " to " ++ show b ++ "\r\n"
+apply (SetCommand k _ _ b False) tm = do
+  atomically $ do
+    m <- readTVar tm
+    writeTVar tm $ Map.insert k b m
+  return Nothing
 apply (GetCommand ks) tm = do
   m <- readTVarIO tm
-  return $ BS.pack $ (unwords $ map (\k -> show (m ! k)) ks) ++ "\r\n"
-apply s _ = return $ BS.pack $ "No action taken: " ++ show s ++ "\r\n"
+  return $ Just $ B.pack $ (unwords $ map (\k -> show (m ! k)) ks) ++ "\r\n"
+apply QuitCommand _ = return Nothing
+apply s _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 
 isQuit :: Command -> Bool
 isQuit QuitCommand = True

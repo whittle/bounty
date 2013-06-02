@@ -12,6 +12,7 @@ import Data.Attoparsec
 
 import Network.Memcached.Command
 import Network.Memcached.Parser
+import Network.Memcached.Types
 
 tests = $(testGroupGenerator)
 

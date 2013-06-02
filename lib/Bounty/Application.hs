@@ -17,16 +17,22 @@ newState :: IO (TVar MemState)
 newState = atomically $ newTVar Map.empty
 
 application :: TVar MemState -> Conduit B.ByteString IO B.ByteString
-application tm = parser =$= shower tm
+application tm = parser =$= quitter =$= applier tm =$= CL.catMaybes
 
 type CommandParse = Either ParseError (PositionRange, Command)
 
 parser :: Conduit B.ByteString IO CommandParse
 parser = conduitParserEither command
 
-shower :: TVar MemState -> Conduit CommandParse IO B.ByteString
-shower tm = CL.mapM $ applier tm
+quitter :: Conduit CommandParse IO CommandParse
+quitter = do
+  mcp <- await
+  case mcp of
+    Nothing -> return ()
+    Just (Right (_, QuitCommand)) -> return ()
+    Just cp -> yield cp >> quitter
 
-applier :: TVar MemState -> CommandParse -> IO B.ByteString
-applier _ (Left e) = return $ B.pack $ show e ++ "\r\n"
-applier tm (Right (_, c)) = apply c tm
+applier :: TVar MemState -> Conduit CommandParse IO (Maybe B.ByteString)
+applier tm = CL.mapM applier'
+  where applier' (Left e) = return $ Just $ B.pack $ "CLIENT_ERROR " ++ show e ++ "\r\n"
+        applier' (Right (_, c)) = apply c tm
