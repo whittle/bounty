@@ -1,6 +1,8 @@
 module Bounty.Application
-       ( newState
+       ( initState
        , application
+       , AppData(..)
+       , State
        ) where
 
 import Control.Concurrent.STM
@@ -13,11 +15,11 @@ import Network.Memcached.Command
 import Network.Memcached.Parser
 import Network.Memcached.Types
 
-newState :: IO (TVar MemState)
-newState = atomically $ newTVar Map.empty
+initState :: IO State
+initState = atomically $ newTVar Map.empty
 
-application :: TVar MemState -> Conduit B.ByteString IO B.ByteString
-application tm = parser =$= quitter =$= applier tm =$= CL.catMaybes
+application :: AppData -> State -> Conduit B.ByteString IO B.ByteString
+application d s = parser =$= quitter =$= applier d s =$= CL.catMaybes
 
 type CommandParse = Either ParseError (PositionRange, Command)
 
@@ -32,7 +34,7 @@ quitter = do
     Just (Right (_, Quit)) -> return ()
     Just cp -> yield cp >> quitter
 
-applier :: TVar MemState -> Conduit CommandParse IO (Maybe B.ByteString)
-applier tm = CL.mapM applier'
+applier :: AppData -> State -> Conduit CommandParse IO (Maybe B.ByteString)
+applier d s = CL.mapM applier'
   where applier' (Left e) = return $ Just $ B.pack $ "CLIENT_ERROR " ++ show e ++ "\r\n"
-        applier' (Right (_, c)) = apply c tm
+        applier' (Right (_, c)) = apply c d s

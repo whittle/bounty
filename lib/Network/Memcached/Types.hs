@@ -1,11 +1,29 @@
-module Network.Memcached.Types where
+module Network.Memcached.Types
+       ( AppData(..)
+       , State
+       , Mem
+       , Key
+       , Flags
+       , Exptime
+       , Bytes
+       , Reply
+       , Content
+       , CasUnique
+       , Time
+       , VerbosityLevel
+       , StatisticsOption(..)
+       ) where
 
-import Control.Monad.Trans.State
+import Control.Concurrent.STM (TVar)
 import qualified Data.ByteString as B
 import qualified Data.Map as Map
+import Data.Version (Version)
 
-type MemState = Map.Map Key Content
-type MemStateM a = StateT MemState IO a
+data AppData = AppData { appVersion :: Version
+                       } deriving (Eq, Show)
+
+type State = TVar Mem
+type Mem = Map.Map Key Content
 
 type Key = B.ByteString
 type Flags = Integer

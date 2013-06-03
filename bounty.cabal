@@ -22,6 +22,7 @@ description:
 extra-source-files:
   README.md
   LICENSE.txt
+  doc/protocol.txt
 
 executable bounty
   hs-source-dirs: src

@@ -9,6 +9,7 @@ import Control.Concurrent.STM
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Map as Map
 import Data.Map ((!))
+import Data.Version (showVersion)
 import Network.Memcached.Types
 
 -- | All the different commands that regular memcached accepts.
@@ -32,15 +33,15 @@ data Command = Set Key Flags Exptime Reply Content
              | Quit
              deriving (Eq, Show)
 
-apply :: Command -> TVar MemState -> IO (Maybe B.ByteString)
-apply (Set k _ _ r c) tm = do
+apply :: Command -> AppData -> State -> IO (Maybe B.ByteString)
+apply (Set k _ _ r c) _ tm = do
   atomically $ do
     m <- readTVar tm
     writeTVar tm $ Map.insert k c m
   return $ if r
            then Just "STORED\r\n"
            else Nothing
-apply (Add k _ _ r c) tm = do
+apply (Add k _ _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.member k m
@@ -48,7 +49,7 @@ apply (Add k _ _ r c) tm = do
       else do writeTVar tm $ Map.insert k c m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Replace k _ _ r c) tm = do
+apply (Replace k _ _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
@@ -56,7 +57,7 @@ apply (Replace k _ _ r c) tm = do
       else do writeTVar tm $ Map.insert k c m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Append k _ _ r c) tm = do
+apply (Append k _ _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
@@ -64,7 +65,7 @@ apply (Append k _ _ r c) tm = do
       else do writeTVar tm $ Map.insertWith (flip B.append) k c m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Prepend k _ _ r c) tm = do
+apply (Prepend k _ _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
@@ -72,10 +73,10 @@ apply (Prepend k _ _ r c) tm = do
       else do writeTVar tm $ Map.insertWith B.append k c m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Get ks) tm = do
+apply (Get ks) _ tm = do
   m <- readTVarIO tm
   return $ Just $ B.pack $ unwords (map (\k -> show (m ! k)) ks) ++ "\r\n"
-apply (Delete k r) tm = do
+apply (Delete k r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
@@ -83,13 +84,14 @@ apply (Delete k r) tm = do
       else do writeTVar tm $ Map.delete k m
               return "DELETED\r\n"
   return $ if r then Just msg else Nothing
-apply (Increment k _ r) tm = do
+apply (Increment k _ r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     undefined
   undefined
-apply Quit _ = return Nothing
-apply s _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
+apply Version d _ = return $ Just $ "VERSION " `B.append` (B.pack $ showVersion $ appVersion d) `B.append` " (Bounty)"
+apply Quit _ _ = return Nothing
+apply s _ _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 
 isQuit :: Command -> Bool
 isQuit Quit = True
