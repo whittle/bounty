@@ -61,7 +61,7 @@ _case_prepend = assertCommandParse "prepend ghjk 13 14 15\r\nqwertyuizxcvbnm\r\n
 _case_prepend_noreply = assertCommandParse "prepend ghjk 13 14 15 noreply\r\nqwertyuizxcvbnm\r\n"
                         $ PrependCommand "ghjk" 13 14 False "qwertyuizxcvbnm"
 
-test_case =
+test_cas =
   [ testCase "without noreply" _case_cas
   , testCase "with noreply" _case_cas_noreply
   ]

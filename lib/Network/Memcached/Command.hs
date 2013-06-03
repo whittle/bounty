@@ -36,8 +36,40 @@ apply (SetCommand k _ _ r c) tm = do
     m <- readTVar tm
     writeTVar tm $ Map.insert k c m
   return $ if r
-           then Just $ B.pack $ "Set " ++ B.unpack k ++ " to " ++ show c ++ "\r\n"
+           then Just "STORED\r\n"
            else Nothing
+apply (AddCommand k _ _ r c) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.member k m
+      then return "NOT_STORED\r\n"
+      else do writeTVar tm $ Map.insert k c m
+              return "STORED\r\n"
+  return $ if r then Just msg else Nothing
+apply (ReplaceCommand k _ _ r c) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.notMember k m
+      then return "NOT_STORED\r\n"
+      else do writeTVar tm $ Map.insert k c m
+              return "STORED\r\n"
+  return $ if r then Just msg else Nothing
+apply (AppendCommand k _ _ r c) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.notMember k m
+      then return "NOT_STORED\r\n"
+      else do writeTVar tm $ Map.insertWith (flip B.append) k c m
+              return "STORED\r\n"
+  return $ if r then Just msg else Nothing
+apply (PrependCommand k _ _ r c) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.notMember k m
+      then return "NOT_STORED\r\n"
+      else do writeTVar tm $ Map.insertWith B.append k c m
+              return "STORED\r\n"
+  return $ if r then Just msg else Nothing
 apply (GetCommand ks) tm = do
   m <- readTVarIO tm
   return $ Just $ B.pack $ (unwords $ map (\k -> show (m ! k)) ks) ++ "\r\n"
