@@ -21,70 +21,70 @@ test_set =
   , testCase "with noreply" _case_set_noreply
   ]
 _case_set = assertCommandParse "set asdf 1 2 3\r\nqwe\r\n"
-            $ SetCommand "asdf" 1 2 True "qwe"
+            $ Set "asdf" 1 2 True "qwe"
 _case_set_noreply = assertCommandParse "set asdf 1 2 3 noreply\r\nqwe\r\n"
-                    $ SetCommand "asdf" 1 2 False "qwe"
+                    $ Set "asdf" 1 2 False "qwe"
 
 test_add =
   [ testCase "without noreply" _case_add
   , testCase "with noreply" _case_add_noreply
   ]
 _case_add = assertCommandParse "add sdfg 4 5 6\r\nzxcvbn\r\n"
-            $ AddCommand "sdfg" 4 5 True "zxcvbn"
+            $ Add "sdfg" 4 5 True "zxcvbn"
 _case_add_noreply = assertCommandParse "add sdfg 4 5 6 noreply\r\nzxcvbn\r\n"
-                    $ AddCommand "sdfg" 4 5 False "zxcvbn"
+                    $ Add "sdfg" 4 5 False "zxcvbn"
 
 test_replace =
   [ testCase "without noreply" _case_replace
   , testCase "with noreply" _case_replace_noreply
   ]
 _case_replace = assertCommandParse "replace dfgh 7 8 9\r\nqwertyuio\r\n"
-                $ ReplaceCommand "dfgh" 7 8 True "qwertyuio"
+                $ Replace "dfgh" 7 8 True "qwertyuio"
 _case_replace_noreply = assertCommandParse "replace dfgh 7 8 9 noreply\r\nqwertyuio\r\n"
-                        $ ReplaceCommand "dfgh" 7 8 False "qwertyuio"
+                        $ Replace "dfgh" 7 8 False "qwertyuio"
 
 test_append =
   [ testCase "without noreply" _case_append
   , testCase "with noreply" _case_append_noreply
   ]
 _case_append = assertCommandParse "append fghj 10 11 12\r\nqwertyuiop[]\r\n"
-               $ AppendCommand "fghj" 10 11 True "qwertyuiop[]"
+               $ Append "fghj" 10 11 True "qwertyuiop[]"
 _case_append_noreply = assertCommandParse "append fghj 10 11 12 noreply\r\nqwertyuiop[]\r\n"
-                       $ AppendCommand "fghj" 10 11 False "qwertyuiop[]"
+                       $ Append "fghj" 10 11 False "qwertyuiop[]"
 
 test_prepend =
   [ testCase "without noreply" _case_prepend
   , testCase "with noreply" _case_prepend_noreply
   ]
 _case_prepend = assertCommandParse "prepend ghjk 13 14 15\r\nqwertyuizxcvbnm\r\n"
-                $ PrependCommand "ghjk" 13 14 True "qwertyuizxcvbnm"
+                $ Prepend "ghjk" 13 14 True "qwertyuizxcvbnm"
 _case_prepend_noreply = assertCommandParse "prepend ghjk 13 14 15 noreply\r\nqwertyuizxcvbnm\r\n"
-                        $ PrependCommand "ghjk" 13 14 False "qwertyuizxcvbnm"
+                        $ Prepend "ghjk" 13 14 False "qwertyuizxcvbnm"
 
 test_cas =
   [ testCase "without noreply" _case_cas
   , testCase "with noreply" _case_cas_noreply
   ]
 _case_cas = assertCommandParse "cas hjkl 16 17 18 19\r\nqwertyuiop[]zxcvbn\r\n"
-            $ CasCommand "hjkl" 16 17 19 True "qwertyuiop[]zxcvbn"
+            $ Cas "hjkl" 16 17 19 True "qwertyuiop[]zxcvbn"
 _case_cas_noreply = assertCommandParse "cas hjkl 16 17 18 19 noreply\r\nqwertyuiop[]zxcvbn\r\n"
-                    $ CasCommand "hjkl" 16 17 19 False "qwertyuiop[]zxcvbn"
+                    $ Cas "hjkl" 16 17 19 False "qwertyuiop[]zxcvbn"
 
-case_get = assertCommandParse "get rtyu\r\n" $ GetCommand ["rtyu"]
+case_get = assertCommandParse "get rtyu\r\n" $ Get ["rtyu"]
 case_gets = assertCommandParse "gets tyui yuio uiop\r\n"
-            $ GetCommand ["tyui", "yuio", "uiop"]
+            $ Get ["tyui", "yuio", "uiop"]
 case_delete = assertCommandParse "delete jkl;\r\n"
-              $ DeleteCommand "jkl;" True
+              $ Delete "jkl;" True
 case_incr = assertCommandParse "incr wert 21\r\n"
-            $ IncrementCommand "wert" 21 True
+            $ Increment "wert" 21 True
 case_decr = assertCommandParse "decr erty 22 noreply\r\n"
-            $ DecrementCommand "erty" 22 False
+            $ Decrement "erty" 22 False
 case_touch = assertCommandParse "touch rtyu 23\r\n"
-             $ TouchCommand "rtyu" 23 True
+             $ Touch "rtyu" 23 True
 case_slabs_reassign = assertCommandParse "slabs reassign -1 24\r\n"
-                      $ SlabsReassignCommand (-1) 24
+                      $ SlabsReassign (-1) 24
 case_slabs_automove = assertCommandParse "slabs automove 0\r\n"
-                      $ SlabsAutomoveCommand 0
+                      $ SlabsAutomove 0
 
 test_stats =
   [ testCase "with no argument" _case_stats
@@ -94,27 +94,27 @@ test_stats =
   , testCase "with sizes argument" _case_stats_sizes
   ]
 _case_stats = assertCommandParse "stats\r\n"
-              $ StatisticsCommand Nothing
+              $ Statistics Nothing
 _case_stats_settings = assertCommandParse "stats settings\r\n"
-                       $ StatisticsCommand $ Just StatisticsOptionSettings
+                       $ Statistics $ Just StatisticsOptionSettings
 _case_stats_items = assertCommandParse "stats items\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionItems
+                    $ Statistics $ Just StatisticsOptionItems
 _case_stats_slabs = assertCommandParse "stats slabs\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionSlabs
+                    $ Statistics $ Just StatisticsOptionSlabs
 _case_stats_sizes = assertCommandParse "stats sizes\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionSizes
+                    $ Statistics $ Just StatisticsOptionSizes
 
 test_flushAll =
   [ testCase "without an int" _case_flushAll
   , testCase "with an int" _case_flushAll_int
   ]
 _case_flushAll = assertCommandParse "flush_all\r\n"
-                 $ FlushAllCommand Nothing True
+                 $ FlushAll Nothing True
 _case_flushAll_int = assertCommandParse "flush_all 23 noreply\r\n"
-                     $ FlushAllCommand (Just 23) False
+                     $ FlushAll (Just 23) False
 
-case_version = assertCommandParse "version\r\n" VersionCommand
-case_verbosity = assertCommandParse "verbosity 0\r\n" $ VerbosityCommand 0
-case_quit = assertCommandParse "quit\r\n" QuitCommand
+case_version = assertCommandParse "version\r\n" Version
+case_verbosity = assertCommandParse "verbosity 0\r\n" $ Verbosity 0
+case_quit = assertCommandParse "quit\r\n" Quit
 
 assertCommandParse b c = parseOnly command b @?= Right c

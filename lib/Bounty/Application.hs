@@ -29,7 +29,7 @@ quitter = do
   mcp <- await
   case mcp of
     Nothing -> return ()
-    Just (Right (_, QuitCommand)) -> return ()
+    Just (Right (_, Quit)) -> return ()
     Just cp -> yield cp >> quitter
 
 applier :: TVar MemState -> Conduit CommandParse IO (Maybe B.ByteString)

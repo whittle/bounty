@@ -17,96 +17,96 @@ command = choice [ add, cas, get, set, decr, incr, quit, stats, touch
                  , replace, version, flushAll, verbosity ]
 
 set :: Parser Command
-set = stringCI "set" >> SetCommand <$> key <*> flags <*> exptime >>= bytesM
+set = stringCI "set" >> Set <$> key <*> flags <*> exptime >>= bytesM
       >>= replyM >>= contentM
 
 add :: Parser Command
-add = stringCI "add" >> AddCommand <$> key <*> flags <*> exptime >>= bytesM
+add = stringCI "add" >> Add <$> key <*> flags <*> exptime >>= bytesM
       >>= replyM >>= contentM
 
 replace :: Parser Command
-replace = stringCI "replace" >> ReplaceCommand <$> key <*> flags <*> exptime
+replace = stringCI "replace" >> Replace <$> key <*> flags <*> exptime
           >>= bytesM >>= replyM >>= contentM
 
 append :: Parser Command
-append = stringCI "append" >> AppendCommand <$> key <*> flags <*> exptime
+append = stringCI "append" >> Append <$> key <*> flags <*> exptime
          >>= bytesM >>= replyM >>= contentM
 
 prepend :: Parser Command
-prepend = stringCI "prepend" >> PrependCommand <$> key <*> flags <*> exptime
+prepend = stringCI "prepend" >> Prepend <$> key <*> flags <*> exptime
           >>= bytesM >>= replyM >>= contentM
 
 cas :: Parser Command
-cas = stringCI "cas" >> CasCommand <$> key <*> flags <*> exptime >>= bytesM
+cas = stringCI "cas" >> Cas <$> key <*> flags <*> exptime >>= bytesM
       >>= casUniqueM >>= replyM >>= contentM
 
 get :: Parser Command
-get = stringCI "get" >> option "" (stringCI "s") >> GetCommand <$> many' key
+get = stringCI "get" >> option "" (stringCI "s") >> Get <$> many' key
       <* newline
 
 delete :: Parser Command
-delete = stringCI "delete" >> DeleteCommand <$> key <*> reply <* newline
+delete = stringCI "delete" >> Delete <$> key <*> reply <* newline
 
 incr :: Parser Command
-incr = stringCI "incr" >> IncrementCommand <$> key <*> integer <*> reply
+incr = stringCI "incr" >> Increment <$> key <*> integer <*> reply
        <* newline
 
 decr :: Parser Command
-decr = stringCI "decr" >> DecrementCommand <$> key <*> integer <*> reply
+decr = stringCI "decr" >> Decrement <$> key <*> integer <*> reply
        <* newline
 
 touch :: Parser Command
-touch = stringCI "touch" >> TouchCommand <$> key <*> exptime <*> reply
+touch = stringCI "touch" >> Touch <$> key <*> exptime <*> reply
         <* newline
 
 slabsReassign :: Parser Command
-slabsReassign = stringCI "slabs" >> skipSpace1 >> stringCI "reassign"
-                >> SlabsReassignCommand <$> nInteger <*> integer <* newline
+slabsReassign = stringCI "slabs" >> space >> stringCI "reassign"
+                >> SlabsReassign <$> nInteger <*> integer <* newline
 
 slabsAutomove :: Parser Command
-slabsAutomove = stringCI "slabs" >> skipSpace1 >> stringCI "automove"
-                >> SlabsAutomoveCommand <$> integer <* newline
+slabsAutomove = stringCI "slabs" >> space >> stringCI "automove"
+                >> SlabsAutomove <$> integer <* newline
 
 stats :: Parser Command
-stats = stringCI "stats" >> StatisticsCommand <$> optionMaybe statisticsOption
+stats = stringCI "stats" >> Statistics <$> optionMaybe statisticsOption
         <* newline
 
 flushAll :: Parser Command
-flushAll = stringCI "flush_all" >> FlushAllCommand <$> optionMaybe integer
+flushAll = stringCI "flush_all" >> FlushAll <$> optionMaybe integer
            <*> reply <* newline
 
 version :: Parser Command
-version = stringCI "version" >> newline >> return VersionCommand
+version = stringCI "version" >> newline >> return Version
 
 verbosity :: Parser Command
-verbosity = stringCI "verbosity" >> VerbosityCommand <$> verbosityLevel
+verbosity = stringCI "verbosity" >> Verbosity <$> verbosityLevel
             <* newline
 
 quit :: Parser Command
-quit = stringCI "quit" >> newline >> return QuitCommand
+quit = stringCI "quit" >> newline >> return Quit
 
 --
 
 key :: Parser Key
-key = skipSpace1 >> takeWhile1 isPrintable
+key = space >> takeWhile1 isPrintable
 
 flags :: Parser Flags
-flags = skipSpace1 >> decimal
+flags = space >> decimal
 
 exptime :: Parser Exptime
-exptime = skipSpace1 >> decimal
+exptime = space >> decimal
 
 bytesM :: a -> Parser (a, Bytes)
 bytesM a = (,) <$> pure a <*> bytes
 
 bytes :: Parser Bytes
-bytes = skipSpace1 >> decimal
+bytes = space >> decimal
 
 replyM :: (Reply -> a, b) -> Parser (a, b)
 replyM (a, b) = (,) <$> fmap a reply <*> pure b <* newline
 
 reply :: Parser Reply
-reply = option True $ skipSpace1 >> stringCI "noreply" >> return False
+reply = option True $ space >> stringCI "noreply" >> return False
 
 contentM :: (Content -> Command, Bytes) -> Parser Command
 contentM (a, b) = a <$> take b <* newline
@@ -115,19 +115,16 @@ casUniqueM :: (CasUnique -> a, b) -> Parser (a, b)
 casUniqueM (a, b) = (,) <$> fmap a casUnique <*> pure b
 
 casUnique :: Parser CasUnique
-casUnique = skipSpace1 >> decimal
+casUnique = space >> decimal
 
 integer :: Parser Integer
-integer = skipSpace1 >> decimal
+integer = space >> decimal
 
 nInteger :: Parser Integer
-nInteger = do
-  skipSpace1
-  f <- option id $ word8 45 >> return negate
-  fmap f decimal
+nInteger = space >> option id (word8 45 >> return negate) >>= flip fmap decimal
 
 statisticsOption :: Parser StatisticsOption
-statisticsOption = skipSpace1 >> choice
+statisticsOption = space >> choice
                      [ stringCI "settings" >> return StatisticsOptionSettings
                      , stringCI "items" >> return StatisticsOptionItems
                      , stringCI "slabs" >> return StatisticsOptionSlabs
@@ -135,16 +132,13 @@ statisticsOption = skipSpace1 >> choice
                      ]
 
 verbosityLevel :: Parser VerbosityLevel
-verbosityLevel = skipSpace1 >> decimal
+verbosityLevel = space >> decimal
 
 newline :: Parser Word8
-newline = skipSpace >> word8 13 >> word8 10
+newline = skipWhile isSpace >> word8 13 >> word8 10
 
-skipSpace :: Parser ()
-skipSpace = skipWhile isSpace
-
-skipSpace1 :: Parser ()
-skipSpace1 = skip isSpace >> skipWhile isSpace
+space :: Parser ()
+space = skip isSpace >> skipWhile isSpace
 
 isSpace :: Word8 -> Bool
 isSpace w = (w == 32) || (w >= 9 && w <= 12)
