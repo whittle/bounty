@@ -12,8 +12,9 @@ import Network.Memcached.Command
 import Network.Memcached.Types
 
 command :: Parser Command
-command = choice [ add, cas, get, set, decr, gets, incr, quit, stats, append
-                 , delete, prepend, replace, version, flushAll, verbosity ]
+command = choice [ add, cas, get, set, decr, incr, quit, stats, touch
+                 , slabsReassign, slabsAutomove, append, delete, prepend
+                 , replace, version, flushAll, verbosity ]
 
 set :: Parser Command
 set = stringCI "set" >> SetCommand <$> key <*> flags <*> exptime >>= bytesM
@@ -39,32 +40,47 @@ cas :: Parser Command
 cas = stringCI "cas" >> CasCommand <$> key <*> flags <*> exptime >>= bytesM
       >>= casUniqueM >>= replyM >>= contentM
 
+get :: Parser Command
+get = stringCI "get" >> option "" (stringCI "s") >> GetCommand <$> many' key
+      <* newline
+
 delete :: Parser Command
-delete = stringCI "delete" >> DeleteCommand <$> key <*> optionMaybe time <*> reply <* newline
+delete = stringCI "delete" >> DeleteCommand <$> key <*> reply <* newline
 
 incr :: Parser Command
-incr = stringCI "incr" >> IncrementCommand <$> key <*> integer <*> reply <* newline
+incr = stringCI "incr" >> IncrementCommand <$> key <*> integer <*> reply
+       <* newline
 
 decr :: Parser Command
-decr = stringCI "decr" >> DecrementCommand <$> key <*> integer <*> reply <* newline
+decr = stringCI "decr" >> DecrementCommand <$> key <*> integer <*> reply
+       <* newline
 
-flushAll :: Parser Command
-flushAll = stringCI "flush_all" >> FlushAllCommand <$> optionMaybe integer <*> reply <* newline
+touch :: Parser Command
+touch = stringCI "touch" >> TouchCommand <$> key <*> exptime <*> reply
+        <* newline
 
-get :: Parser Command
-get = stringCI "get" >> GetCommand <$> many' key <* newline
+slabsReassign :: Parser Command
+slabsReassign = stringCI "slabs" >> skipSpace1 >> stringCI "reassign"
+                >> SlabsReassignCommand <$> nInteger <*> integer <* newline
 
-gets :: Parser Command
-gets = stringCI "gets" >> GetsCommand <$> many' key <* newline
+slabsAutomove :: Parser Command
+slabsAutomove = stringCI "slabs" >> skipSpace1 >> stringCI "automove"
+                >> SlabsAutomoveCommand <$> integer <* newline
 
 stats :: Parser Command
-stats = stringCI "stats" >> StatisticsCommand <$> optionMaybe statisticsOption <* newline
+stats = stringCI "stats" >> StatisticsCommand <$> optionMaybe statisticsOption
+        <* newline
+
+flushAll :: Parser Command
+flushAll = stringCI "flush_all" >> FlushAllCommand <$> optionMaybe integer
+           <*> reply <* newline
 
 version :: Parser Command
 version = stringCI "version" >> newline >> return VersionCommand
 
 verbosity :: Parser Command
-verbosity = stringCI "verbosity" >> VerbosityCommand <$> verbosityLevel <* newline
+verbosity = stringCI "verbosity" >> VerbosityCommand <$> verbosityLevel
+            <* newline
 
 quit :: Parser Command
 quit = stringCI "quit" >> newline >> return QuitCommand
@@ -101,15 +117,19 @@ casUniqueM (a, b) = (,) <$> fmap a casUnique <*> pure b
 casUnique :: Parser CasUnique
 casUnique = skipSpace1 >> decimal
 
-time :: Parser Time
-time = skipSpace1 >> decimal
-
 integer :: Parser Integer
 integer = skipSpace1 >> decimal
 
+nInteger :: Parser Integer
+nInteger = do
+  skipSpace1
+  f <- option id $ word8 45 >> return negate
+  fmap f decimal
+
 statisticsOption :: Parser StatisticsOption
 statisticsOption = skipSpace1 >> choice
-                     [ stringCI "items" >> return StatisticsOptionItems
+                     [ stringCI "settings" >> return StatisticsOptionSettings
+                     , stringCI "items" >> return StatisticsOptionItems
                      , stringCI "slabs" >> return StatisticsOptionSlabs
                      , stringCI "sizes" >> return StatisticsOptionSizes
                      ]

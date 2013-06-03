@@ -18,7 +18,8 @@ type Time = Integer
 type VerbosityLevel = Integer
 
 -- | The StatisticsCommand can accept one of three different options.
-data StatisticsOption = StatisticsOptionItems
+data StatisticsOption = StatisticsOptionSettings
+                      | StatisticsOptionItems
                       | StatisticsOptionSlabs
                       | StatisticsOptionSizes
                       deriving (Eq, Show)

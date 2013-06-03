@@ -18,13 +18,15 @@ data Command = SetCommand Key Flags Exptime Reply Content
              | AppendCommand Key Flags Exptime Reply Content
              | PrependCommand Key Flags Exptime Reply Content
              | CasCommand Key Flags Exptime CasUnique Reply Content
-             | DeleteCommand Key (Maybe Time) Reply
+             | GetCommand [Key]
+             | DeleteCommand Key Reply
              | IncrementCommand Key Integer Reply
              | DecrementCommand Key Integer Reply
-             | FlushAllCommand (Maybe Integer) Reply
-             | GetCommand [Key]
-             | GetsCommand [Key]
+             | TouchCommand Key Exptime Reply
+             | SlabsReassignCommand Integer Integer
+             | SlabsAutomoveCommand Integer
              | StatisticsCommand (Maybe StatisticsOption)
+             | FlushAllCommand (Maybe Integer) Reply
              | VersionCommand
              | VerbosityCommand VerbosityLevel
              | QuitCommand
@@ -72,7 +74,20 @@ apply (PrependCommand k _ _ r c) tm = do
   return $ if r then Just msg else Nothing
 apply (GetCommand ks) tm = do
   m <- readTVarIO tm
-  return $ Just $ B.pack $ (unwords $ map (\k -> show (m ! k)) ks) ++ "\r\n"
+  return $ Just $ B.pack $ unwords (map (\k -> show (m ! k)) ks) ++ "\r\n"
+apply (DeleteCommand k r) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.notMember k m
+      then return "NOT_FOUND\r\n"
+      else do writeTVar tm $ Map.delete k m
+              return "DELETED\r\n"
+  return $ if r then Just msg else Nothing
+apply (IncrementCommand k _ r) tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    undefined
+  undefined
 apply QuitCommand _ = return Nothing
 apply s _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 

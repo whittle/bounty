@@ -70,19 +70,39 @@ _case_cas = assertCommandParse "cas hjkl 16 17 18 19\r\nqwertyuiop[]zxcvbn\r\n"
 _case_cas_noreply = assertCommandParse "cas hjkl 16 17 18 19 noreply\r\nqwertyuiop[]zxcvbn\r\n"
                     $ CasCommand "hjkl" 16 17 19 False "qwertyuiop[]zxcvbn"
 
-test_delete =
-  [ testCase "without a time" _case_delete
-  , testCase "with a time" _case_delete_time
-  ]
-_case_delete = assertCommandParse "delete jkl;\r\n"
-               $ DeleteCommand "jkl;" Nothing True
-_case_delete_time = assertCommandParse "delete qwer 20 noreply\r\n"
-                    $ DeleteCommand "qwer" (Just 20) False
-
+case_get = assertCommandParse "get rtyu\r\n" $ GetCommand ["rtyu"]
+case_gets = assertCommandParse "gets tyui yuio uiop\r\n"
+            $ GetCommand ["tyui", "yuio", "uiop"]
+case_delete = assertCommandParse "delete jkl;\r\n"
+              $ DeleteCommand "jkl;" True
 case_incr = assertCommandParse "incr wert 21\r\n"
             $ IncrementCommand "wert" 21 True
 case_decr = assertCommandParse "decr erty 22 noreply\r\n"
             $ DecrementCommand "erty" 22 False
+case_touch = assertCommandParse "touch rtyu 23\r\n"
+             $ TouchCommand "rtyu" 23 True
+case_slabs_reassign = assertCommandParse "slabs reassign -1 24\r\n"
+                      $ SlabsReassignCommand (-1) 24
+case_slabs_automove = assertCommandParse "slabs automove 0\r\n"
+                      $ SlabsAutomoveCommand 0
+
+test_stats =
+  [ testCase "with no argument" _case_stats
+  , testCase "with settings argument" _case_stats_settings
+  , testCase "with items argument" _case_stats_items
+  , testCase "with slabs argument" _case_stats_slabs
+  , testCase "with sizes argument" _case_stats_sizes
+  ]
+_case_stats = assertCommandParse "stats\r\n"
+              $ StatisticsCommand Nothing
+_case_stats_settings = assertCommandParse "stats settings\r\n"
+                       $ StatisticsCommand $ Just StatisticsOptionSettings
+_case_stats_items = assertCommandParse "stats items\r\n"
+                    $ StatisticsCommand $ Just StatisticsOptionItems
+_case_stats_slabs = assertCommandParse "stats slabs\r\n"
+                    $ StatisticsCommand $ Just StatisticsOptionSlabs
+_case_stats_sizes = assertCommandParse "stats sizes\r\n"
+                    $ StatisticsCommand $ Just StatisticsOptionSizes
 
 test_flushAll =
   [ testCase "without an int" _case_flushAll
@@ -92,25 +112,6 @@ _case_flushAll = assertCommandParse "flush_all\r\n"
                  $ FlushAllCommand Nothing True
 _case_flushAll_int = assertCommandParse "flush_all 23 noreply\r\n"
                      $ FlushAllCommand (Just 23) False
-
-case_get = assertCommandParse "get rtyu\r\n" $ GetCommand ["rtyu"]
-case_gets = assertCommandParse "gets tyui yuio uiop\r\n"
-            $ GetsCommand ["tyui", "yuio", "uiop"]
-
-test_stats =
-  [ testCase "with no argument" _case_stats
-  , testCase "with items argument" _case_stats_items
-  , testCase "with slabs argument" _case_stats_slabs
-  , testCase "with sizes argument" _case_stats_sizes
-  ]
-_case_stats = assertCommandParse "stats\r\n"
-              $ StatisticsCommand Nothing
-_case_stats_items = assertCommandParse "stats items\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionItems
-_case_stats_slabs = assertCommandParse "stats slabs\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionSlabs
-_case_stats_sizes = assertCommandParse "stats sizes\r\n"
-                    $ StatisticsCommand $ Just StatisticsOptionSizes
 
 case_version = assertCommandParse "version\r\n" VersionCommand
 case_verbosity = assertCommandParse "verbosity 0\r\n" $ VerbosityCommand 0
