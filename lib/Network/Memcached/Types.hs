@@ -17,9 +17,9 @@ type CasUnique = Integer
 type Time = Integer
 type VerbosityLevel = Integer
 
--- | The Statistics can accept one of three different options.
-data StatisticsOption = StatisticsOptionSettings
-                      | StatisticsOptionItems
-                      | StatisticsOptionSlabs
-                      | StatisticsOptionSizes
+-- | The stats command can accept one of four different options.
+data StatisticsOption = StatSettings
+                      | StatItems
+                      | StatSlabs
+                      | StatSizes
                       deriving (Eq, Show)

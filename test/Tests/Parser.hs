@@ -96,13 +96,13 @@ test_stats =
 _case_stats = assertCommandParse "stats\r\n"
               $ Statistics Nothing
 _case_stats_settings = assertCommandParse "stats settings\r\n"
-                       $ Statistics $ Just StatisticsOptionSettings
+                       $ Statistics $ Just StatSettings
 _case_stats_items = assertCommandParse "stats items\r\n"
-                    $ Statistics $ Just StatisticsOptionItems
+                    $ Statistics $ Just StatItems
 _case_stats_slabs = assertCommandParse "stats slabs\r\n"
-                    $ Statistics $ Just StatisticsOptionSlabs
+                    $ Statistics $ Just StatSlabs
 _case_stats_sizes = assertCommandParse "stats sizes\r\n"
-                    $ Statistics $ Just StatisticsOptionSizes
+                    $ Statistics $ Just StatSizes
 
 test_flushAll =
   [ testCase "without an int" _case_flushAll
