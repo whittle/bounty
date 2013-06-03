@@ -1,6 +1,6 @@
 name:             bounty
 version:          0.0.0.1
-synopsis:         A drop-in replacement for memcached that also supports a subset of the relational algebra
+synopsis:         A drop-in replacement for memcached with relational extensions
 homepage:         https://github.com/whittle/bounty
 license:          MIT
 license-file:     LICENSE.txt
@@ -16,8 +16,10 @@ bug-reports:      https://github.com/whittle/bounty/issues
 description:
   Bounty is a drop-in replacement for memcached that also supports a
   subset of the relational algebra. Inspired by Neha Narula’s
-  presentation about Pequod at Ricon East 2013. N.B. Bounty is
-  currently highly experimental, and not even kind of complete.
+  presentation about Pequod at Ricon East 2013.
+  .
+  N.B. Bounty is currently highly experimental, and not even kind of
+  complete.
 
 extra-source-files:
   README.md
@@ -27,7 +29,7 @@ extra-source-files:
 executable bounty
   hs-source-dirs: src
   main-is:        Bounty.hs
-  ghc-options:    -Wall
+  ghc-options:    -Wall -threaded -feager-blackholing -with-rtsopts=-N
 
   other-modules:
     Bounty.Options
