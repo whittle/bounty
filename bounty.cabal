@@ -29,10 +29,14 @@ executable bounty
   main-is:        Bounty.hs
   ghc-options:    -Wall
 
+  other-modules:
+    Bounty.Options
+
   build-depends:  base                          >= 4.5
                 , bounty
                 , conduit                       >= 1
                 , network-conduit               >= 1
+                , optparse-applicative          >= 0.5
 
 library
   hs-source-dirs: lib
