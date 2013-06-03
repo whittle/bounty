@@ -20,10 +20,10 @@ test_set =
   [ testCase "without noreply" _case_set
   , testCase "with noreply" _case_set_noreply
   ]
-_case_set = assertCommandParse "set asdf 1 2 3\r\n"
-            $ SetCommand "asdf" 1 2 3 True
-_case_set_noreply = assertCommandParse "set asdf 1 2 3 noreply\r\n"
-                    $ SetCommand "asdf" 1 2 3 False
+_case_set = assertCommandParse "set asdf 1 2 3\r\nqwe\r\n"
+            $ SetCommand "asdf" 1 2 True "qwe"
+_case_set_noreply = assertCommandParse "set asdf 1 2 3 noreply\r\nqwe\r\n"
+                    $ SetCommand "asdf" 1 2 False "qwe"
 
 test_add =
   [ testCase "without noreply" _case_add
@@ -34,14 +34,41 @@ _case_add = assertCommandParse "add sdfg 4 5 6\r\nzxcvbn\r\n"
 _case_add_noreply = assertCommandParse "add sdfg 4 5 6 noreply\r\nzxcvbn\r\n"
                     $ AddCommand "sdfg" 4 5 False "zxcvbn"
 
-case_replace = assertCommandParse "replace dfgh 7 8 9\r\n"
-               $ ReplaceCommand "dfgh" 7 8 9 True
-case_append = assertCommandParse "append fghj 10 11 12 noreply\r\n"
-              $ AppendCommand "fghj" 10 11 12 False
-case_prepend = assertCommandParse "prepend ghjk 13 14 15\r\n"
-               $ PrependCommand "ghjk" 13 14 15 True
-case_cas = assertCommandParse "cas hjkl 16 17 18 19 noreply\r\n"
-           $ CasCommand "hjkl" 16 17 18 19 False
+test_replace =
+  [ testCase "without noreply" _case_replace
+  , testCase "with noreply" _case_replace_noreply
+  ]
+_case_replace = assertCommandParse "replace dfgh 7 8 9\r\nqwertyuio\r\n"
+                $ ReplaceCommand "dfgh" 7 8 True "qwertyuio"
+_case_replace_noreply = assertCommandParse "replace dfgh 7 8 9 noreply\r\nqwertyuio\r\n"
+                        $ ReplaceCommand "dfgh" 7 8 False "qwertyuio"
+
+test_append =
+  [ testCase "without noreply" _case_append
+  , testCase "with noreply" _case_append_noreply
+  ]
+_case_append = assertCommandParse "append fghj 10 11 12\r\nqwertyuiop[]\r\n"
+               $ AppendCommand "fghj" 10 11 True "qwertyuiop[]"
+_case_append_noreply = assertCommandParse "append fghj 10 11 12 noreply\r\nqwertyuiop[]\r\n"
+                       $ AppendCommand "fghj" 10 11 False "qwertyuiop[]"
+
+test_prepend =
+  [ testCase "without noreply" _case_prepend
+  , testCase "with noreply" _case_prepend_noreply
+  ]
+_case_prepend = assertCommandParse "prepend ghjk 13 14 15\r\nqwertyuizxcvbnm\r\n"
+                $ PrependCommand "ghjk" 13 14 True "qwertyuizxcvbnm"
+_case_prepend_noreply = assertCommandParse "prepend ghjk 13 14 15 noreply\r\nqwertyuizxcvbnm\r\n"
+                        $ PrependCommand "ghjk" 13 14 False "qwertyuizxcvbnm"
+
+test_case =
+  [ testCase "without noreply" _case_cas
+  , testCase "with noreply" _case_cas_noreply
+  ]
+_case_cas = assertCommandParse "cas hjkl 16 17 18 19\r\nqwertyuiop[]zxcvbn\r\n"
+            $ CasCommand "hjkl" 16 17 19 True "qwertyuiop[]zxcvbn"
+_case_cas_noreply = assertCommandParse "cas hjkl 16 17 18 19 noreply\r\nqwertyuiop[]zxcvbn\r\n"
+                    $ CasCommand "hjkl" 16 17 19 False "qwertyuiop[]zxcvbn"
 
 test_delete =
   [ testCase "without a time" _case_delete

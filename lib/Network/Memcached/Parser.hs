@@ -3,7 +3,7 @@ module Network.Memcached.Parser
        ( command
        ) where
 
-import Prelude hiding (takeWhile)
+import Prelude hiding (take, takeWhile)
 import Control.Applicative
 import Data.Attoparsec
 import Data.Attoparsec.ByteString.Char8 (decimal, stringCI)
@@ -16,34 +16,28 @@ command = choice [ add, cas, get, set, decr, gets, incr, quit, stats, append
                  , delete, prepend, replace, version, flushAll, verbosity ]
 
 set :: Parser Command
-set = stringCI "set" >> SetCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
+set = stringCI "set" >> SetCommand <$> key <*> flags <*> exptime >>= bytesM
+      >>= replyM >>= contentM
 
 add :: Parser Command
-add = startAdd >>= bytesAdd >>= replyAdd >>= completeAdd
-
-startAdd :: Parser (Reply -> Content -> Command)
-startAdd = stringCI "add" >> AddCommand <$> key <*> flags <*> exptime
-
-bytesAdd :: (Reply -> Content -> Command) -> Parser (Reply -> Content -> Command, Int)
-bytesAdd a = (,) <$> return a <*> int
-
-replyAdd :: (Reply -> Content -> Command, Int) -> Parser (Content -> Command, Int)
-replyAdd (a, b) = (,) <$> fmap a reply <*> return b <* newline
-
-completeAdd :: (Content -> Command, Int) -> Parser Command
-completeAdd (a, b) = a <$> Data.Attoparsec.take b <* newline
+add = stringCI "add" >> AddCommand <$> key <*> flags <*> exptime >>= bytesM
+      >>= replyM >>= contentM
 
 replace :: Parser Command
-replace = stringCI "replace" >> ReplaceCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
+replace = stringCI "replace" >> ReplaceCommand <$> key <*> flags <*> exptime
+          >>= bytesM >>= replyM >>= contentM
 
 append :: Parser Command
-append = stringCI "append" >> AppendCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
+append = stringCI "append" >> AppendCommand <$> key <*> flags <*> exptime
+         >>= bytesM >>= replyM >>= contentM
 
 prepend :: Parser Command
-prepend = stringCI "prepend" >> PrependCommand <$> key <*> flags <*> exptime <*> bytes <*> reply <* newline
+prepend = stringCI "prepend" >> PrependCommand <$> key <*> flags <*> exptime
+          >>= bytesM >>= replyM >>= contentM
 
 cas :: Parser Command
-cas = stringCI "cas" >> CasCommand <$> key <*> flags <*> exptime <*> bytes <*> casUnique <*> reply <* newline
+cas = stringCI "cas" >> CasCommand <$> key <*> flags <*> exptime >>= bytesM
+      >>= casUniqueM >>= replyM >>= contentM
 
 delete :: Parser Command
 delete = stringCI "delete" >> DeleteCommand <$> key <*> optionMaybe time <*> reply <* newline
@@ -75,6 +69,8 @@ verbosity = stringCI "verbosity" >> VerbosityCommand <$> verbosityLevel <* newli
 quit :: Parser Command
 quit = stringCI "quit" >> newline >> return QuitCommand
 
+--
+
 key :: Parser Key
 key = skipSpace1 >> takeWhile1 isPrintable
 
@@ -84,11 +80,23 @@ flags = skipSpace1 >> decimal
 exptime :: Parser Exptime
 exptime = skipSpace1 >> decimal
 
+bytesM :: a -> Parser (a, Bytes)
+bytesM a = (,) <$> pure a <*> bytes
+
 bytes :: Parser Bytes
 bytes = skipSpace1 >> decimal
 
+replyM :: (Reply -> a, b) -> Parser (a, b)
+replyM (a, b) = (,) <$> fmap a reply <*> pure b <* newline
+
 reply :: Parser Reply
-reply = skipSpace >> option True (stringCI "noreply" >> return False)
+reply = option True $ skipSpace1 >> stringCI "noreply" >> return False
+
+contentM :: (Content -> Command, Bytes) -> Parser Command
+contentM (a, b) = a <$> take b <* newline
+
+casUniqueM :: (CasUnique -> a, b) -> Parser (a, b)
+casUniqueM (a, b) = (,) <$> fmap a casUnique <*> pure b
 
 casUnique :: Parser CasUnique
 casUnique = skipSpace1 >> decimal
@@ -98,9 +106,6 @@ time = skipSpace1 >> decimal
 
 integer :: Parser Integer
 integer = skipSpace1 >> decimal
-
-int :: Parser Int
-int = skipSpace1 >> decimal
 
 statisticsOption :: Parser StatisticsOption
 statisticsOption = skipSpace1 >> choice

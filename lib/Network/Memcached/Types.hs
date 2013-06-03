@@ -1,18 +1,18 @@
 module Network.Memcached.Types where
 
 import Control.Monad.Trans.State
-import qualified Data.ByteString as BS
+import qualified Data.ByteString as B
 import qualified Data.Map as Map
 
-type MemState = Map.Map Key Bytes
+type MemState = Map.Map Key Content
 type MemStateM a = StateT MemState IO a
 
-type Key = BS.ByteString
+type Key = B.ByteString
 type Flags = Integer
 type Exptime = Integer
-type Bytes = Integer
+type Bytes = Int
 type Reply = Bool
-type Content = BS.ByteString
+type Content = B.ByteString
 type CasUnique = Integer
 type Time = Integer
 type VerbosityLevel = Integer
