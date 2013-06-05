@@ -67,6 +67,7 @@ test-suite tests
   hs-source-dirs: test
 
   other-modules:
+    Tests.Command
     Tests.Parser
 
   build-depends:  base                          >= 4.5
@@ -76,6 +77,8 @@ test-suite tests
                 , test-framework-hunit          >= 0.3
                 , test-framework-th             >= 0.2
                 , attoparsec                    >= 0.10
+                , containers                    >= 0.4
+                , stm                           >= 2.2
                 , bounty
 
 source-repository head
