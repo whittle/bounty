@@ -98,6 +98,25 @@ test_prepend =
        msg @?= Nothing
   ]
 
+test_get =
+  [ testCase "with no keys" $ do
+       s <- setState []
+       msg <- apply (Get []) settings s
+       msg @?= Just "END\r\n"
+  , testCase "with one existing key" $ do
+       s <- setState [("foo", "bar")]
+       msg <- apply (Get ["foo"]) settings s
+       msg @?= Just "VALUE foo 0 3\r\nbar\r\nEND\r\n"
+  , testCase "with one missing key" $ do
+       s <- setState []
+       msg <- apply (Get ["foo"]) settings s
+       msg @?= Just "END\r\n"
+  , testCase "with mixed existing and missing keys" $ do
+       s <- setState [("foo", "bar"), ("baz", "quux")]
+       msg <- apply (Get ["foo", "nil", "baz", "null"]) settings s
+       msg @?= Just "VALUE foo 0 3\r\nbar\r\nVALUE baz 0 4\r\nquux\r\nEND\r\n"
+  ]
+
 setState = atomically . newTVar . Map.fromList
 settings = undefined
 assertState s m = readTVarIO s >>= (@?=) (Map.fromList m)

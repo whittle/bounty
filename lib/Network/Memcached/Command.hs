@@ -9,6 +9,7 @@ import Control.Concurrent.STM
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Map as Map
 import Data.Map ((!))
+import Data.Monoid ((<>))
 import Data.Version (showVersion)
 import Network.Memcached.Types
 
@@ -75,7 +76,12 @@ apply (Prepend k _ _ r c) _ tm = do
   return $ if r then Just msg else Nothing
 apply (Get ks) _ tm = do
   m <- readTVarIO tm
-  return $ Just $ B.pack $ unwords (map (\k -> show (m ! k)) ks) ++ "\r\n"
+  let print'' k v = "VALUE " <> k <> " 0 " <> (B.pack $ show $ B.length v) <> "\r\n" <> v <> "\r\n"
+  let print' k = if Map.member k m
+                 then print'' k $ m ! k
+                 else ""
+  let vals = map print' ks
+  return $ Just $ B.concat vals <> "END\r\n"
 apply (Delete k r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
@@ -84,9 +90,9 @@ apply (Delete k r) _ tm = do
       else do writeTVar tm $ Map.delete k m
               return "DELETED\r\n"
   return $ if r then Just msg else Nothing
-apply (Increment k _ r) _ tm = do
-  msg <- atomically $ do
-    m <- readTVar tm
+apply (Increment _k _ _r) _ tm = do
+  _msg <- atomically $ do
+    _m <- readTVar tm
     undefined
   undefined
 apply Version d _ = return $ Just $ "VERSION " `B.append` (B.pack $ showVersion $ appVersion d) `B.append` " (Bounty)"
