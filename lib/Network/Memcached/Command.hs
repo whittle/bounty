@@ -95,7 +95,10 @@ apply (Increment _k _ _r) _ tm = do
     _m <- readTVar tm
     undefined
   undefined
-apply Version d _ = return $ Just $ "VERSION " `B.append` (B.pack $ showVersion $ appVersion d) `B.append` " (Bounty)"
+apply (FlushAll _ r) _ tm = do
+  atomically $ writeTVar tm Map.empty
+  return $ if r then Just "OK\r\n" else Nothing
+apply Version d _ = return $ Just $ "VERSION " <> (B.pack $ showVersion $ appVersion d) <> " (Bounty)"
 apply Quit _ _ = return Nothing
 apply s _ _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 

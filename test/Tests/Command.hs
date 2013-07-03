@@ -117,6 +117,35 @@ test_get =
        msg @?= Just "VALUE foo 0 3\r\nbar\r\nVALUE baz 0 4\r\nquux\r\nEND\r\n"
   ]
 
+test_delete =
+  [ testCase "for an existing key" $ do
+       s <- setState [("foo", "bar"), ("baz", "quux")]
+       msg <- apply (Delete "foo" True) settings s
+       msg @?= Just "DELETED\r\n"
+       assertState s [("baz", "quux")]
+  , testCase "for a missing key" $ do
+       s <- setState [("baz", "quux")]
+       msg <- apply (Delete "foo" True) settings s
+       msg @?= Just "NOT_FOUND\r\n"
+       assertState s [("baz", "quux")]
+  , testCase "noreply" $ do
+       s <- setState [("foo", "bar"), ("baz", "quux")]
+       msg <- apply (Delete "foo" False) settings s
+       msg @?= Nothing
+  ]
+
+test_flush_all =
+  [ testCase "with no argument" $ do
+       s <- setState [("foo", "bar"), ("baz", "quux")]
+       msg <- apply (FlushAll Nothing True) settings s
+       msg @?= Just "OK\r\n"
+       assertState s []
+  , testCase "noreply" $ do
+       s <- setState [("foo", "bar"), ("baz", "quux")]
+       msg <- apply (FlushAll Nothing False) settings s
+       msg @?= Nothing
+  ]
+
 setState = atomically . newTVar . Map.fromList
 settings = undefined
 assertState s m = readTVarIO s >>= (@?=) (Map.fromList m)

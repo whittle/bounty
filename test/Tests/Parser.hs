@@ -80,9 +80,9 @@ test_flushAll =
   , testCase "with an int" $ "flush_all 23 noreply\r\n" @<?= FlushAll (Just 23) False
   ]
 
-case_version = assertCommandParse "version\r\n" Version
-case_verbosity = assertCommandParse "verbosity 0\r\n" $ Verbosity 0
-case_quit = assertCommandParse "quit\r\n" Quit
+case_version = "version\r\n" @<?= Version
+case_verbosity = "verbosity 0\r\n" @<?= Verbosity 0
+case_quit = "quit\r\n" @<?= Quit
 
 assertCommandParse b c = parseOnly command b @?= Right c
 (@<?=) = assertCommandParse
