@@ -1,3 +1,4 @@
+/.hsenv
 /bounty
 /dist
 /cabal-dev
@@ -5,4 +6,3 @@
 *.hi
 *.chi
 *.chs.h
-/.virthualenv
