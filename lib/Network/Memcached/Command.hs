@@ -30,7 +30,7 @@ data Command = Set Key Flags Exptime Reply Content
              | Statistics (Maybe StatisticsOption)
              | FlushAll (Maybe Integer) Reply
              | Version
-             | Verbosity VerbosityLevel
+             | Verbosity VerbosityLevel Reply
              | Quit
              deriving (Eq, Show)
 
@@ -110,10 +110,20 @@ apply (Decrement k i r) _ tm = do
       Just v -> do writeTVar tm m'
                    return $ v <> "\r\n"
   return $ if r then Just msg else Nothing
+apply (Touch k _ r) _ tm = do
+  -- Doesn’t do anything; implement automatic expiration.
+  msg <- atomically $ do
+    m <- readTVar tm
+    if Map.notMember k m
+      then return "NOT_FOUND\r\n"
+      else return "TOUCHED\r\n"
+  return $ if r then Just msg else Nothing
 apply (FlushAll Nothing r) _ tm = do
   atomically $ writeTVar tm Map.empty
   return $ if r then Just "OK\r\n" else Nothing
 apply Version d _ = return $ Just $ "VERSION " <> (B.pack $ showVersion $ appVersion d) <> " (Bounty)"
+apply (Verbosity _ r) _ _ = do
+  return $ if r then Just "OK\r\n" else Nothing
 apply Quit _ _ = return Nothing
 apply s _ _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 

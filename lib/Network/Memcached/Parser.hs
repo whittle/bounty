@@ -77,7 +77,8 @@ version :: Parser Command
 version = string "version" >> newline >> return Version
 
 verbosity :: Parser Command
-verbosity = string "verbosity" >> Verbosity <$> verbosityLevel <* newline
+verbosity = string "verbosity" >> Verbosity <$> verbosityLevel <*> reply
+            <* newline
 
 quit :: Parser Command
 quit = string "quit" >> newline >> return Quit

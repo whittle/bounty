@@ -139,7 +139,7 @@ test_delete =
   ]
 
 test_increment =
-  [ testCase "" $ do
+  [ testCase "with an existing key" $ do
        s <- setState [("foo", "23")]
        msg <- apply (Increment "foo" 19 True) settings s
        msg @?= Just "42\r\n"
@@ -148,6 +148,7 @@ test_increment =
        s <- setState []
        msg <- apply (Increment "foo" 19 True) settings s
        msg @?= Just "NOT_FOUND\r\n"
+       assertState s []
   , testCase "with no reply" $ do
        s <- setState [("foo", "23")]
        msg <- apply (Increment "foo" 19 False) settings s
@@ -156,7 +157,7 @@ test_increment =
   ]
 
 test_decrement =
-  [ testCase "" $ do
+  [ testCase "with an existing key" $ do
        s <- setState [("foo", "61")]
        msg <- apply (Decrement "foo" 19 True) settings s
        msg @?= Just "42\r\n"
@@ -165,11 +166,30 @@ test_decrement =
        s <- setState []
        msg <- apply (Decrement "foo" 19 True) settings s
        msg @?= Just "NOT_FOUND\r\n"
+       assertState s []
   , testCase "with no reply" $ do
        s <- setState [("foo", "61")]
        msg <- apply (Decrement "foo" 19 False) settings s
        msg @?= Nothing
        assertState s [("foo", "42")]
+  ]
+
+test_touch =
+  [ testCase "with an existing key" $ do
+       s <- setState [("foo", "bar")]
+       msg <- apply (Touch "foo" 0 True) settings s
+       msg @?= Just "TOUCHED\r\n"
+       assertState s [("foo", "bar")]
+  , testCase "with a missing key" $ do
+       s <- setState []
+       msg <- apply (Touch "foo" 0 True) settings s
+       msg @?= Just "NOT_FOUND\r\n"
+       assertState s []
+  , testCase "with no reply" $ do
+       s <- setState []
+       msg <- apply (Touch "foo" 0 False) settings s
+       msg @?= Nothing
+       assertState s []
   ]
 
 test_flush_all =
@@ -185,6 +205,16 @@ test_flush_all =
        assertState s []
   ]
 
+test_verbosity =
+  [ testCase "with reply" $ do
+       msg <- apply (Verbosity 0 True) settings undefined
+       msg @?= Just "OK\r\n"
+  , testCase "with no reply" $ do
+       msg <- apply (Verbosity 0 False) settings undefined
+       msg @?= Nothing
+  ]
+
 setState = atomically . newTVar . Map.fromList
-settings = undefined
 assertState s m = readTVarIO s >>= (@?=) (Map.fromList m)
+
+settings = undefined

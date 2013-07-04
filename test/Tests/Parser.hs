@@ -81,8 +81,15 @@ test_flushAll =
   ]
 
 case_version = "version\r\n" @<?= Version
-case_verbosity = "verbosity 0\r\n" @<?= Verbosity 0
+
+test_verbosity =
+  [ testCase "without noreply" $ "verbosity 0\r\n" @<?= Verbosity 0 True
+  , testCase "with noreply" $ "verbosity 3 noreply\r\n" @<?= Verbosity 3 False
+  ]
+
 case_quit = "quit\r\n" @<?= Quit
+
+-- Test helper functions
 
 assertCommandParse b c = parseOnly command b @?= Right c
 (@<?=) = assertCommandParse
