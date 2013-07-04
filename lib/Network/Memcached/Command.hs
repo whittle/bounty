@@ -34,54 +34,72 @@ data Command = Set Key Flags Exptime Reply Content
              | Quit
              deriving (Eq, Show)
 
+-- N.B. This module has gotten ridiculously ugly. Time to refactor.
+
 apply :: Command -> AppData -> State -> IO (Maybe B.ByteString)
-apply (Set k _ _ r c) _ tm = do
+
+apply (Set k f _ r c) _ tm = do
   atomically $ do
     m <- readTVar tm
-    writeTVar tm $ Map.insert k c m
-  return $ if r
-           then Just "STORED\r\n"
-           else Nothing
-apply (Add k _ _ r c) _ tm = do
+    let record = Record f Nothing 0 c
+    writeTVar tm $ Map.insert k record m
+  return $ if r then Just "STORED\r\n" else Nothing
+
+apply (Add k f _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.member k m
       then return "NOT_STORED\r\n"
-      else do writeTVar tm $ Map.insert k c m
+      else do let record = Record f Nothing 0 c
+              writeTVar tm $ Map.insert k record m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Replace k _ _ r c) _ tm = do
+
+apply (Replace k f _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
       then return "NOT_STORED\r\n"
-      else do writeTVar tm $ Map.insert k c m
+      else do let record = Record f Nothing 0 c
+              writeTVar tm $ Map.insert k record m
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Append k _ _ r c) _ tm = do
+
+apply (Append k f _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
       then return "NOT_STORED\r\n"
-      else do writeTVar tm $ Map.insertWith (flip B.append) k c m
+      else do let record = m ! k
+              let record' = Record f Nothing 0 $ content record <> c
+              writeTVar tm $ Map.insert k record' m
+              -- TODO: replace the above mess with a lens and insertWith
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
-apply (Prepend k _ _ r c) _ tm = do
+
+apply (Prepend k f _ r c) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
     if Map.notMember k m
       then return "NOT_STORED\r\n"
-      else do writeTVar tm $ Map.insertWith B.append k c m
+      else do let record = m ! k
+              let record' = Record f Nothing 0 $ c <> content record
+              writeTVar tm $ Map.insert k record' m
+              -- TODO: replace the above mess with a lens and insertWith
               return "STORED\r\n"
   return $ if r then Just msg else Nothing
+
 apply (Get ks) _ tm = do
   m <- readTVarIO tm
-  let print'' k v = "VALUE " <> k <> " 0 " <> (B.pack $ show $ B.length v) <> "\r\n" <> v <> "\r\n"
+  let f = B.pack . show . flags
+  let l = B.pack . show . B.length . content
+  let print'' k r = B.intercalate " " ["VALUE", k, f r, l r] <> "\r\n" <> content r <> "\r\n"
   let print' k = if Map.member k m
                  then print'' k $ m ! k
                  else ""
   let vals = map print' ks
   return $ Just $ B.concat vals <> "END\r\n"
+
 apply (Delete k r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
@@ -90,26 +108,31 @@ apply (Delete k r) _ tm = do
       else do writeTVar tm $ Map.delete k m
               return "DELETED\r\n"
   return $ if r then Just msg else Nothing
+
 apply (Increment k i r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
-    let f _ v = Just $ B.pack $ show $ (+i) $ read $ B.unpack v
-    let (mv, m') = Map.updateLookupWithKey f k m
-    case mv of
-      Nothing -> return "NOT_FOUND\r\n"
-      Just v -> do writeTVar tm m'
-                   return $ v <> "\r\n"
+    if Map.notMember k m
+      then return "NOT_FOUND\r\n"
+      else do let Record f e c v = m ! k
+              let v' = B.pack $ show $ (+i) $ read $ B.unpack v
+              writeTVar tm $ Map.insert k (Record f e c v') m
+              -- TODO: replace the above mess with a lens and updateLookupWithKey
+              return $ v' <> "\r\n"
   return $ if r then Just msg else Nothing
+
 apply (Decrement k i r) _ tm = do
   msg <- atomically $ do
     m <- readTVar tm
-    let f _ v = Just $ B.pack $ show $ (subtract i) $ read $ B.unpack v
-    let (mv, m') = Map.updateLookupWithKey f k m
-    case mv of
-      Nothing -> return "NOT_FOUND\r\n"
-      Just v -> do writeTVar tm m'
-                   return $ v <> "\r\n"
+    if Map.notMember k m
+      then return "NOT_FOUND\r\n"
+      else do let Record f e c v = m ! k
+              let v' = B.pack $ show $ (subtract i) $ read $ B.unpack v
+              writeTVar tm $ Map.insert k (Record f e c v') m
+              -- TODO: replace the above mess with a lens and updateLookupWithKey
+              return $ v' <> "\r\n"
   return $ if r then Just msg else Nothing
+
 apply (Touch k _ r) _ tm = do
   -- Doesn’t do anything; implement automatic expiration.
   msg <- atomically $ do
@@ -118,13 +141,19 @@ apply (Touch k _ r) _ tm = do
       then return "NOT_FOUND\r\n"
       else return "TOUCHED\r\n"
   return $ if r then Just msg else Nothing
+
 apply (FlushAll Nothing r) _ tm = do
   atomically $ writeTVar tm Map.empty
   return $ if r then Just "OK\r\n" else Nothing
+
 apply Version d _ = return $ Just $ "VERSION " <> (B.pack $ showVersion $ appVersion d) <> " (Bounty)"
+
 apply (Verbosity _ r) _ _ = do
+  -- Doesn’t do anything; implement logging?
   return $ if r then Just "OK\r\n" else Nothing
+
 apply Quit _ _ = return Nothing
+
 apply s _ _ = return $ Just $ B.pack $ "No action taken: " ++ show s ++ "\r\n"
 
 isQuit :: Command -> Bool

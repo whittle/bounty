@@ -10,7 +10,7 @@ import Data.Attoparsec.ByteString.Char8 (decimal, stringCI)
 import Data.ByteString (ByteString)
 import Data.Word (Word8)
 import Network.Memcached.Command (Command(..))
-import Network.Memcached.Types
+import Network.Memcached.Types hiding (Record(..))
 
 string :: ByteString -> Parser ByteString
 string = stringCI
