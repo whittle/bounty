@@ -90,12 +90,27 @@ apply (Delete k r) _ tm = do
       else do writeTVar tm $ Map.delete k m
               return "DELETED\r\n"
   return $ if r then Just msg else Nothing
-apply (Increment _k _ _r) _ tm = do
-  _msg <- atomically $ do
-    _m <- readTVar tm
-    undefined
-  undefined
-apply (FlushAll _ r) _ tm = do
+apply (Increment k i r) _ tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    let f _ v = Just $ B.pack $ show $ (+i) $ read $ B.unpack v
+    let (mv, m') = Map.updateLookupWithKey f k m
+    case mv of
+      Nothing -> return "NOT_FOUND\r\n"
+      Just v -> do writeTVar tm m'
+                   return $ v <> "\r\n"
+  return $ if r then Just msg else Nothing
+apply (Decrement k i r) _ tm = do
+  msg <- atomically $ do
+    m <- readTVar tm
+    let f _ v = Just $ B.pack $ show $ (subtract i) $ read $ B.unpack v
+    let (mv, m') = Map.updateLookupWithKey f k m
+    case mv of
+      Nothing -> return "NOT_FOUND\r\n"
+      Just v -> do writeTVar tm m'
+                   return $ v <> "\r\n"
+  return $ if r then Just msg else Nothing
+apply (FlushAll Nothing r) _ tm = do
   atomically $ writeTVar tm Map.empty
   return $ if r then Just "OK\r\n" else Nothing
 apply Version d _ = return $ Just $ "VERSION " <> (B.pack $ showVersion $ appVersion d) <> " (Bounty)"

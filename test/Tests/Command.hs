@@ -62,6 +62,7 @@ test_replace =
        s <- setState []
        msg <- apply (Replace "foo" 0 0 False "bar") settings s
        msg @?= Nothing
+       assertState s []
   ]
 
 test_append =
@@ -79,6 +80,7 @@ test_append =
        s <- setState []
        msg <- apply (Append "foo" 0 0 False "bar") settings s
        msg @?= Nothing
+       assertState s []
   ]
 
 test_prepend =
@@ -96,6 +98,7 @@ test_prepend =
        s <- setState []
        msg <- apply (Prepend "foo" 0 0 False "bar") settings s
        msg @?= Nothing
+       assertState s []
   ]
 
 test_get =
@@ -118,20 +121,55 @@ test_get =
   ]
 
 test_delete =
-  [ testCase "for an existing key" $ do
+  [ testCase "with an existing key" $ do
        s <- setState [("foo", "bar"), ("baz", "quux")]
        msg <- apply (Delete "foo" True) settings s
        msg @?= Just "DELETED\r\n"
        assertState s [("baz", "quux")]
-  , testCase "for a missing key" $ do
+  , testCase "with a missing key" $ do
        s <- setState [("baz", "quux")]
        msg <- apply (Delete "foo" True) settings s
        msg @?= Just "NOT_FOUND\r\n"
        assertState s [("baz", "quux")]
-  , testCase "noreply" $ do
+  , testCase "with no reply" $ do
        s <- setState [("foo", "bar"), ("baz", "quux")]
        msg <- apply (Delete "foo" False) settings s
        msg @?= Nothing
+       assertState s [("baz", "quux")]
+  ]
+
+test_increment =
+  [ testCase "" $ do
+       s <- setState [("foo", "23")]
+       msg <- apply (Increment "foo" 19 True) settings s
+       msg @?= Just "42\r\n"
+       assertState s [("foo", "42")]
+  , testCase "with a missing key" $ do
+       s <- setState []
+       msg <- apply (Increment "foo" 19 True) settings s
+       msg @?= Just "NOT_FOUND\r\n"
+  , testCase "with no reply" $ do
+       s <- setState [("foo", "23")]
+       msg <- apply (Increment "foo" 19 False) settings s
+       msg @?= Nothing
+       assertState s [("foo", "42")]
+  ]
+
+test_decrement =
+  [ testCase "" $ do
+       s <- setState [("foo", "61")]
+       msg <- apply (Decrement "foo" 19 True) settings s
+       msg @?= Just "42\r\n"
+       assertState s [("foo", "42")]
+  , testCase "with a missing key" $ do
+       s <- setState []
+       msg <- apply (Decrement "foo" 19 True) settings s
+       msg @?= Just "NOT_FOUND\r\n"
+  , testCase "with no reply" $ do
+       s <- setState [("foo", "61")]
+       msg <- apply (Decrement "foo" 19 False) settings s
+       msg @?= Nothing
+       assertState s [("foo", "42")]
   ]
 
 test_flush_all =
@@ -144,6 +182,7 @@ test_flush_all =
        s <- setState [("foo", "bar"), ("baz", "quux")]
        msg <- apply (FlushAll Nothing False) settings s
        msg @?= Nothing
+       assertState s []
   ]
 
 setState = atomically . newTVar . Map.fromList
