@@ -37,6 +37,19 @@ Implementation
 
 * Tests are all written in HUnit for the moment.
 
+Notes
+-----
+
+* After researching a number of different options, I’m exploring the
+  possibility of using
+  [Prefix Hash Trees (PHTs)](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.617)
+  for distributed range queries. Based on that paper, I’m implementing
+  this in a separate library.
+
+* I keep getting this feeling like Knuth has already solved this, but
+  I can’t find it. Maybe
+  [Volume 5](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming).
+
 Known Issues
 ------------
 
@@ -46,3 +59,7 @@ Known Issues
   copying key and value bytestrings and evaluating the Map to normal
   form prior to shoving it back into STM. Instead, I’m already
   researching more concurrency-friendly data structures.
+
+* Some inputs can totally crash the server. Ouch. That’s gonna need
+  some exception handling. I’ll add that when I reorganize how
+  commands are implemented (it’s ugly right now).
