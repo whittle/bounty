@@ -21,6 +21,7 @@ data Command = Set Key Flags Exptime Reply Content
              | Prepend Key Flags Exptime Reply Content
              | Cas Key Flags Exptime CasUnique Reply Content
              | Get [Key]
+             | Gets [Key]
              | Delete Key Reply
              | Increment Key Integer Reply
              | Decrement Key Integer Reply
@@ -94,6 +95,18 @@ apply (Get ks) _ tm = do
   let f = B.pack . show . flags
   let l = B.pack . show . B.length . content
   let print'' k r = B.intercalate " " ["VALUE", k, f r, l r] <> "\r\n" <> content r <> "\r\n"
+  let print' k = if Map.member k m
+                 then print'' k $ m ! k
+                 else ""
+  let vals = map print' ks
+  return $ Just $ B.concat vals <> "END\r\n"
+
+apply (Gets ks) _ tm = do
+  m <- readTVarIO tm
+  let f = B.pack . show . flags
+  let l = B.pack . show . B.length . content
+  let c = B.pack . show . unique
+  let print'' k r = B.intercalate " " ["VALUE", k, f r, l r, c r] <> "\r\n" <> content r <> "\r\n"
   let print' k = if Map.member k m
                  then print'' k $ m ! k
                  else ""

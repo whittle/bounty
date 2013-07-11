@@ -59,7 +59,7 @@ test_cas =
   ]
 
 case_get = "get rtyu\r\n" @<?= Get ["rtyu"]
-case_gets = "gets tyui yuio uiop\r\n" @<?= Get ["tyui", "yuio", "uiop"]
+case_gets = "gets tyui yuio uiop\r\n" @<?= Gets ["tyui", "yuio", "uiop"]
 case_delete = "delete jkl;\r\n" @<?= Delete "jkl;" True
 case_incr = "incr wert 21\r\n" @<?= Increment "wert" 21 True
 case_decr = "decr erty 22 noreply\r\n" @<?= Decrement "erty" 22 False

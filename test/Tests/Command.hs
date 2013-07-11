@@ -123,6 +123,25 @@ test_get =
        msg @?= Just "VALUE foo 6765 3\r\nbar\r\nVALUE baz 10946 4\r\nquux\r\nEND\r\n"
   ]
 
+test_gets =
+  [ testCase "with no keys" $ do
+       s <- setState []
+       msg <- apply (Gets []) settings s
+       msg @?= Just "END\r\n"
+  , testCase "with one existing key" $ do
+       s <- setState [("foo", Record 4181 Nothing 0 "bar")]
+       msg <- apply (Gets ["foo"]) settings s
+       msg @?= Just "VALUE foo 4181 3 0\r\nbar\r\nEND\r\n"
+  , testCase "with one missing key" $ do
+       s <- setState []
+       msg <- apply (Gets ["foo"]) settings s
+       msg @?= Just "END\r\n"
+  , testCase "with mixed existing and missing keys" $ do
+       s <- setState [("foo", Record 6765 Nothing 1 "bar"), ("baz", Record 10946 Nothing 2 "quux")]
+       msg <- apply (Gets ["foo", "nil", "baz", "null"]) settings s
+       msg @?= Just "VALUE foo 6765 3 1\r\nbar\r\nVALUE baz 10946 4 2\r\nquux\r\nEND\r\n"
+  ]
+
 test_delete =
   [ testCase "with an existing key" $ do
        s <- setState [("foo", Record 17711 Nothing 0 "bar"), ("baz", Record 28657 Nothing 0 "quux")]

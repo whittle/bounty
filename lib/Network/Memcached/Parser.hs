@@ -16,7 +16,7 @@ string :: ByteString -> Parser ByteString
 string = stringCI
 
 command :: Parser Command
-command = choice [ add, cas, get, set, decr, incr, quit, stats, touch
+command = choice [ add, cas, get, set, decr, gets, incr, quit, stats, touch
                  , slabsReassign, slabsAutomove, append, delete, prepend
                  , replace, version, flushAll, verbosity ]
 
@@ -45,7 +45,10 @@ cas = string "cas" >> Cas <$> key <*> flags <*> exptime >>= bytesM
       >>= casUniqueM >>= replyM >>= contentM
 
 get :: Parser Command
-get = string "get" >> option "" (string "s") >> Get <$> many' key <* newline
+get = string "get" >> Get <$> many' key <* newline
+
+gets :: Parser Command
+gets = string "gets" >> Gets <$> many' key <* newline
 
 delete :: Parser Command
 delete = string "delete" >> Delete <$> key <*> reply <* newline
