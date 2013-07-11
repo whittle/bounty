@@ -55,10 +55,10 @@ Known Issues
 
 * There are some space leaks around pushing data onto the STM Map in a
   naïve fashion. If the final product was going to store everything in
-  a Map wrapped in a TVar, I would be remiss for not explicitly
-  copying key and value bytestrings and evaluating the Map to normal
+  a lazy btree wrapped in a TVar, I would be remiss for not explicitly
+  copying key and value bytestrings and evaluating the btree to normal
   form prior to shoving it back into STM. Instead, I’m already
-  researching more concurrency-friendly data structures.
+  researching more concurrency-friendly data structures (see Notes).
 
 * Some inputs can totally crash the server. Ouch. That’s gonna need
   some exception handling. I’ll add that when I reorganize how
